@@ -1,0 +1,128 @@
+@extends('layouts.petugas.master')
+
+@section('title')
+    Lelang
+@endsection
+
+@section('pages')
+    Lelang Buka
+@endsection
+
+@section('content')
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                        <h6 class="text-white text-capitalize ps-3">Data Lelang Buka</h6>
+                    </div>
+                </div>
+                <div class="card-body pb-2">
+                    <div class="table-responsive p-0">
+                        <div id="read"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@endsection
+
+@push('scripts')
+<script>
+    let table;
+    $(document).ready(function() {
+        read()
+
+        $(document).on('click', '#status', function () {
+            let id = $(this).data('id');
+            let status = $(this).data('status');
+
+            Swal.fire({
+            title: 'Yakin?',
+            text: 'Menutup pelelangan untuk barang ini??',
+            icon: 'warning',
+            showDenyButton: false,
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+            denyButtonText: 'No',
+            customClass: {
+                actions: 'my-actions',
+                cancelButton: 'order-1 right-gap',
+                confirmButton: 'order-2',
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post(`{{ url('lelang-status') }}/${id}`, {
+                        '_token': $('[name=csrf-token]').attr('content'),
+                        '_method': 'put',
+                        'status': status
+                    })
+                    .done((response) => {
+                        toastr.success('Berhasil!!', 'Berhasil menutup data!', {timeOut: 1500})
+                        read()
+                    })
+                    .fail((errors) => {
+                        toastr.error('Gagal!!', 'Tidak dapat mengubah data!', {timeOut: 1500})
+                        return;
+                    });
+                }
+            })
+        });
+
+        $(document).on('click', '.pagination a', function(e){
+            e.preventDefault();
+            let page = $(this).attr('href').split('page=')[1];
+            data(page)
+        })
+    })
+
+    function data(page){
+        $.ajax({
+            url: '/paginate-databuka?page='+page,
+            success:function(res){
+                $('#read').html(res);
+            }
+        })
+    }
+
+    function read(){
+        $.get("{{ route('lelang.dataBuka') }}", function(data,status){
+            $('#read').html(data);
+        })
+    }
+
+    function deleteData(url){
+        Swal.fire({
+            title: 'Yakin?',
+            text: 'Apakah Anda igin menghapus Data terpilih??',
+            icon: 'warning',
+            showDenyButton: false,
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+            denyButtonText: 'No',
+            customClass: {
+                actions: 'my-actions',
+                cancelButton: 'order-1 right-gap',
+                confirmButton: 'order-2',
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post(url, {
+                    '_token': $('[name=csrf-token]').attr('content'),
+                    '_method': 'delete'
+                })
+                .done((response) => {
+                    read();
+                    toastr.success('Berhasil!!', 'Berhasil mengahpus data!', {timeOut: 1500})
+                })
+                .fail((errors) => {
+                    toastr.error('Gagal!!', 'Tidak dapat menghapus Data!', {timeOut: 1500})
+                    return;
+                })
+            }
+        })
+    }
+</script>
+@endpush
+
